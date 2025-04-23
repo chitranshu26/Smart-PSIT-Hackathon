@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pay with Razorpay</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h2>Pay ₹500</h2>
+    <button id="pay-btn">Pay Now</button>
+
+    <script>
+        document.getElementById("pay-btn").onclick = async function () {
+            const res = await fetch(" https://0ffa-103-210-29-52.ngrok-free.app/create_order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: 50000 }) // ₹500
+            });
+
+            const order = await res.json();
+
+            const options = {
+                "key": "rzp_test_XscoZaTm58ffUp", // Your test key
+                "amount": order.amount,
+                "currency": "INR",
+                "name": "Test Shop",
+                "description": "Test Payment",
+                "order_id": order.id,
+                "handler": function (response) {
+                    alert("Payment successful!\nPayment ID: " + response.razorpay_payment_id);
+                },
+                "prefill": {
+                    "name": "Test User",
+                    "email": "test@example.com",
+                    "contact": "9999999999"
+                },
+                "theme": {
+                    "color": "#3399cc"
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+        };
+    </script>
+</body>
+</html>
