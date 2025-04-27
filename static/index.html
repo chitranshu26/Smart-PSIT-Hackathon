@@ -10,10 +10,10 @@
 
     <script>
         document.getElementById("pay-btn").onclick = async function () {
-            const res = await fetch(" https://0ffa-103-210-29-52.ngrok-free.app/create_order", {
+            const res = await fetch("/create_order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: 50000 }) // ₹500
+                body: JSON.stringify({ amount: 500 }) // ₹500
             });
 
             const order = await res.json();
