@@ -135,5 +135,9 @@ async def get_transaction(order_id: str, session: Session = Depends(get_session)
         raise HTTPException(status_code=404, detail="Transaction not found")
     return tx
 
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
 # To run locally:
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000
