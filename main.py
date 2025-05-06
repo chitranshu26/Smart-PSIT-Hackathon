@@ -2,7 +2,8 @@ import os
 import json
 import razorpay
 from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 from pydantic import BaseModel
 from typing import Optional
@@ -35,11 +36,12 @@ app.add_middleware(
 # Serve static files (index.html, etc.)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Initialize Jinja2 templates for rendering the payment page
+templates = Jinja2Templates(directory="templates")
+
 @app.get("/")
 async def root():
     return FileResponse("static/index.html")
-
-
 
 # Database configuration (SQLite)
 DATABASE_URL = "sqlite:///./payments.db"
@@ -69,6 +71,7 @@ class OrderRequest(BaseModel):
     amount: int
     currency: Optional[str] = "INR"
     receipt: Optional[str] = None
+    email: Optional[str] = None
 
 class OrderResponse(BaseModel):
     order_id: str
@@ -79,7 +82,7 @@ class OrderResponse(BaseModel):
 # Endpoint: Create a Razorpay order
 @app.post("/create_order", response_model=OrderResponse)
 async def create_order(req: OrderRequest):
-    amount_paise = req.amount * 100
+    amount_paise = req.amount * 100  # Convert amount to paise
     order_data = {
         "amount": amount_paise,
         "currency": req.currency,
@@ -102,7 +105,7 @@ async def webhook(request: Request, session: Session = Depends(get_session)):
     # Verify webhook signature
     try:
         client.utility.verify_webhook_signature(
-            body, signature, "jai1019"
+            body, signature, RAZORPAY_WEBHOOK_SECRET
         )
     except razorpay.errors.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
@@ -135,9 +138,17 @@ async def get_transaction(order_id: str, session: Session = Depends(get_session)
         raise HTTPException(status_code=404, detail="Transaction not found")
     return tx
 
+# Endpoint to redirect user to the Razorpay payment page
+@app.get("/pay/{order_id}/{amount}/{email}")
+async def pay_page(request: Request, order_id: str, amount: int, email: str):
+    return templates.TemplateResponse("payment.html", {
+        "request": request,
+        "order_id": order_id,
+        "amount": amount,
+        "email": email
+    })
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port, reload=False)
-# To run locally:
-# uvicorn main:app --reload --host 0.0.0.0 --port 8000

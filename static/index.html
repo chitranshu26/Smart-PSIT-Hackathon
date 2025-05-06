@@ -5,42 +5,42 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
-    <h2>Pay ₹500</h2>
-    <button id="pay-btn">Pay Now</button>
+    <h2>Processing Payment...</h2>
+    <button id="pay-btn" style="display:none;">Pay Now</button>
 
     <script>
-        document.getElementById("pay-btn").onclick = async function () {
-            const res = await fetch("/create_order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: 500 }) // ₹500
-            });
+        // Extract URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const order_id = urlParams.get("order_id");
+        const amount = parseInt(urlParams.get("amount") || "0");
+        const email = urlParams.get("email") || "guest@example.com";
 
-            const order = await res.json();
-
+        if (!order_id || !amount) {
+            document.body.innerHTML = "<h3>⚠️ Invalid payment link.</h3>";
+        } else {
             const options = {
-                "key": "rzp_test_XscoZaTm58ffUp", // Your test key
-                "amount": order.amount,
+                "key": "rzp_test_XscoZaTm58ffUp",
+                "amount": amount,
                 "currency": "INR",
-                "name": "Test Shop",
-                "description": "Test Payment",
-                "order_id": order.id,
+                "name": "Smart Travel",
+                "description": "Ticket Booking",
+                "order_id": order_id,
                 "handler": function (response) {
-                    alert("Payment successful!\nPayment ID: " + response.razorpay_payment_id);
+                    alert("✅ Payment successful!\nPayment ID: " + response.razorpay_payment_id);
                 },
                 "prefill": {
-                    "name": "Test User",
-                    "email": "test@example.com",
+                    "name": "Smart User",
+                    "email": email,
                     "contact": "9999999999"
                 },
                 "theme": {
-                    "color": "#3399cc"
+                    "color": "#0077cc"
                 }
             };
 
             const rzp = new Razorpay(options);
             rzp.open();
-        };
+        }
     </script>
 </body>
 </html>
